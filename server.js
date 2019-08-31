@@ -79,6 +79,27 @@ server.post('/createroom',(req,res) => {
 const io = require('socket.io')(server_);
 
 io.on('connection', (socket) => {
+    socket.on("chatSend",(data) => {
+        io.to(data.room).emit("chat",data);
+    })
+    socket.on("tick",(data) => {
+        Rooms.map(room => {
+            if(room.name == data.room){
+                if(room.host == socket.request.connection.remoteAddress){
+                    console.log(room.video.CurrentSeconds);
+                    if(room.video.CurrentSeconds < room.video.VideoEnd){
+                        room.video.CurrentSeconds++;
+                        setTimeout(() => {
+                            io.to(data.room).emit("response",room);
+                        },30000);
+                        
+                        
+                    }
+                }
+            }
+        });
+        console.log(data);
+    })
     socket.on("updateDuration",(data) => {
         if(data.room.host == socket.request.connection.remoteAddress ) {
            // 
