@@ -9,8 +9,9 @@ import Youtube from 'react-youtube'
 import TextField from '@material-ui/core/TextField';
 import axios from 'axios';
 
-const socket = openSocket('http://192.168.0.2:8000');
+const socket = openSocket('https://paulohsn.localtunnel.me');
 const Player = ({history,match}) => {
+    var update = true;
     const [roomInfo,setRoomInfo] = useState({
         video: {
             CurrentSeconds:0,
@@ -20,16 +21,36 @@ const Player = ({history,match}) => {
     });
     const [check,setCheck] = useState(false);
     const [UrlVideo,setUrlVideo] = useState('');
-    const [timeVideo,setTime] = useState(0);
+    const [chatHistory,setChatHistory] = useState([]);
+    const [chatMessage,setChatMessage] = useState('');
+    const [CanISend,setCan] = useState(true);
     useEffect(()=> {
-        console.log(roomInfo);
     });
     
-    socket.on("updateTime",(data) => {
-    
-    });
+    socket.on("chat",(data) => {
+        console.log(data);
+        let x = chatHistory;
+        x.push(data);
+        setCan(true);
+        x= x.filter(function(item, index){
+            return x.indexOf(item) >= index;
+        });
+        setChatHistory(x);
+    })
+
+    socket.on("response", (data) => {
+        update = true;
+        setInterval(() => {
+            if(update){
+            socket.emit("tick",{host:data.host,room:data.name});
+            update = false;
+            }
+        },1000);
+        
+    }); 
     socket.on("update",(data) => {
         setRoomInfo(data);
+        socket.emit("tick",{host:roomInfo.host,room:roomInfo.name});    
     });
 
     if(check == false) {
@@ -87,7 +108,23 @@ const Player = ({history,match}) => {
             }
            sendVideo();
         }}>Assistir</Button>
-        <TextField onChange={(e) => {setUrlVideo(e.target.value);}}></TextField>
+        <TextField onChange={(e) => {setUrlVideo(e.target.value);}} placeholder="Youtube Video ID"></TextField><br/>
+        <TextField placeholder="Chat Message" onChange={(e) => {
+            setChatMessage(e.target.value);
+        }}></TextField>
+        <Button onClick={() => {
+            if(CanISend){
+            socket.emit("chatSend",{id:socket.id,message:chatMessage,room:roomInfo.name});
+            setCan(false);
+            }
+        }}>Enviar</Button> 
+        <div className="chat">
+        {chatHistory.map(msg => {
+            return(
+                <p>{msg.id}: {msg.message}</p>
+            )
+        })}
+        </div>
         </Container>
     )
 };

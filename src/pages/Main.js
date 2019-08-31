@@ -6,7 +6,7 @@ import openSocket from 'socket.io-client';
 import api from '../services/api';
 import './Main.css';
 
-const socket = openSocket('http://192.168.0.2:8000');
+const socket = openSocket('https://paulohsn.localtunnel.me');
 
 const Main = ({history}) => {
     const [RoomList,setRoomList] = useState([]);
